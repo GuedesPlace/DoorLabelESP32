@@ -6,10 +6,41 @@
 const uint32_t screen_width = 960;
 const uint32_t screen_height = 540;
 
-PictureRestEndpoint *pictureRestEndpointPtr;
-void onDraw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4])
+uint8_t *g_received;
+
+void g_pngle_on_draw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4])
 {
-    return pictureRestEndpointPtr->pngle_on_draw(pngle, x, y, w, h, rgba);
+    // uint16_t color = (rgba[0] << 8 & 0xf800) | (rgba[1] << 3 & 0x07e0) | (rgba[2] >> 3 & 0x001f);
+    uint8_t r = rgba[0]; // 0 - 255
+    uint8_t g = rgba[1]; // 0 - 255
+    uint8_t b = rgba[2]; // 0 - 255
+    uint8_t a = rgba[3]; // 0: fully transparent, 255: fully opaque
+
+    // if (a) printf("put pixel at (%d, %d) with color #%02x%02x%02x\n", x, y, r, g, b);
+    int position = (x - 1) + ((y - 1) * 540);
+    if (position > 540 * 960)
+    {
+        Serial.print("ERROR... X: ");
+        Serial.print(x);
+        Serial.print(" Y:");
+        Serial.print(y);
+        Serial.print(" Position:");
+        Serial.println(position);
+    }
+    else
+    {
+        g_received[position] = (uint8_t)(r * 0.2126) + (g * 0.7152) + (b * 0.0722);
+    }
+}
+
+void g_pic_init()
+{
+    g_received = (uint8_t *)heap_caps_malloc(screen_width * screen_height, MALLOC_CAP_SPIRAM);
+    memset(g_received, 0xFF, screen_width * screen_height);
+}
+void g_pic_cleanup()
+{
+    //heap_caps_free(g_received);
 }
 
 PictureRestEndpoint::PictureRestEndpoint(String endpointName, String functionCode, String macAddress)
@@ -18,8 +49,6 @@ PictureRestEndpoint::PictureRestEndpoint(String endpointName, String functionCod
     m_functionCode = functionCode;
     m_macAddressAsString = macAddress;
     m_macAddressAsString.replace(":", "_");
-    m_received = (uint8_t *)heap_caps_malloc(screen_width * screen_height, MALLOC_CAP_SPIRAM);
-    memset(m_received, 0xFF, screen_width * screen_height);
     m_client = new WiFiClientSecure();
 }
 
@@ -96,6 +125,7 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
 
         // Initializing an HTTPS communication using the secure client
         Serial.print("[HTTPS] begin...\n");
+        bool hasError = false;
         if (https.begin(*m_client, "https://" + m_endpointName + ".azurewebsites.net/api/deviceimage/" + m_macAddressAsString + "?code=" + m_functionCode))
         { // HTTPS
             Serial.print("[HTTPS] GET...\n");
@@ -104,36 +134,21 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
             // httpCode will be negative on error
             if (httpCode > 0)
             {
+                
                 WiFiClient *stream = https.getStreamPtr();
                 pngle_t *pngle = pngle_new();
-                pictureRestEndpointPtr = this;
-                // pngle_draw_callback_t onDrawCB = std::bind(&PictureRestEndpoint::pngle_on_draw, this);
-                // pngle_set_draw_callback(pngle, onDrawCB);
-                // pngle_set_draw_callback(pngle, callback);
-                pngle_set_draw_callback(pngle, &onDraw);
+                pngle_set_draw_callback(pngle, g_pngle_on_draw);
                 uint8_t buf[2048];
                 int remain = 0;
                 int retry = 0;
-                while (https.connected())
+                int lenTotal = https.getSize();
+                Serial.print("Total Size is: ");
+                Serial.println(lenTotal);
+                while (https.connected() && (lenTotal > 0 || lenTotal == -1))
                 {
                     size_t size = stream->available();
+                    if (!size) { delay(1); continue; }
                     
-                    if (!size)
-                    {
-                        if (retry < 10)
-                        {
-                            Serial.print("Ready for retry: ");
-                            Serial.println(retry);
-                            delay(100);
-                            retry++;
-                            continue;
-                        }
-                        Serial.println("Cuttoff");
-                        break;
-                    } else {
-                        retry = 0;
-                    }
-
                     if (size > sizeof(buf) - remain)
                     {
                         size = sizeof(buf) - remain;
@@ -145,10 +160,13 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                         int fed = pngle_feed(pngle, buf, remain + len);
                         if (fed < 0)
                         {
-                            Serial.println("ERRORO");
+                            Serial.printf("ERROR: %s\n", pngle_error(pngle));
+                            hasError = true;
                             break;
                         }
-
+                        if(lenTotal > 0) {
+                            lenTotal -= fed;
+                        }
                         remain = remain + len - fed;
                         if (remain > 0)
                         {
@@ -160,7 +178,7 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                         delay(1);
                     }
                 }
-
+                
                 pngle_destroy(pngle);
                 Serial.println("DATA RECEIVED");
             }
@@ -171,37 +189,16 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                 return nullptr;
             }
             https.end();
-            return m_received;
+            if (hasError) {
+                return nullptr;
+            }
+            Serial.println("FINISHED");
+            return g_received;
         }
     }
     return nullptr;
 }
 PictureRestEndpoint::~PictureRestEndpoint()
 {
-    heap_caps_free(m_received);
-}
-
-void PictureRestEndpoint::pngle_on_draw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4])
-{
-    // uint16_t color = (rgba[0] << 8 & 0xf800) | (rgba[1] << 3 & 0x07e0) | (rgba[2] >> 3 & 0x001f);
-    uint8_t r = rgba[0]; // 0 - 255
-    uint8_t g = rgba[1]; // 0 - 255
-    uint8_t b = rgba[2]; // 0 - 255
-    uint8_t a = rgba[3]; // 0: fully transparent, 255: fully opaque
-
-    // if (a) printf("put pixel at (%d, %d) with color #%02x%02x%02x\n", x, y, r, g, b);
-    int position = (x - 1) + ((y - 1) * 540);
-    if (position > 540 * 960)
-    {
-        Serial.print("ERROR... X: ");
-        Serial.print(x);
-        Serial.print(" Y:");
-        Serial.print(y);
-        Serial.print(" Position:");
-        Serial.println(position);
-    }
-    else
-    {
-        m_received[position] = (uint8_t)(r * 0.2126) + (g * 0.7152) + (b * 0.0722);
-    }
+    //g_pic_cleanup();    
 }

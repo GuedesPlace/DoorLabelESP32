@@ -2,7 +2,6 @@
 #define PREFERENCE_CONTROLLER_H_
 
 #include <Preferences.h>
-#include "./dl_types.h"
 
 class PreferenceController {
     public:

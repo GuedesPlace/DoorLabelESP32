@@ -10,6 +10,7 @@ struct hasNewPictureResult {
     bool notConfigured;
     String hash;
 };
+void g_pic_init();
 
 class PictureRestEndpoint {
     public:
@@ -17,13 +18,10 @@ class PictureRestEndpoint {
         ~PictureRestEndpoint();
         hasNewPictureResult hasNewPicture(float voltage, String currentHash);
         uint8_t *FetchPictureToLocalBuffer();
-        void pngle_on_draw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4]);
     private:
-        
         String m_endpointName;
         String m_functionCode;
         String m_macAddressAsString;
-        uint8_t *m_received;
         WiFiClientSecure *m_client;
 };
 

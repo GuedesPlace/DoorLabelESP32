@@ -12,10 +12,8 @@
 
 #include "esp_adc_cal.h"
 
-#include <pngle.h>
 #include "./main.h"
 #include "preference_controller.h"
-#include "dl_types.h"
 #include "./controller/MyWifiStatusCallBack.h"
 #include "./controller/MyEspUpdateControllerCallback.h"
 #include "picture_rest_endpoint.h"
@@ -143,7 +141,6 @@ void loop()
         }
         if (result.hasNewPicture)
         {
-            preferenceController.updateHashCode(result.hash);
             uint8_t *picReceived = pre->FetchPictureToLocalBuffer();
             if (picReceived != nullptr)
             {
@@ -151,7 +148,6 @@ void loop()
                 displayController->updateDisplayWithPicture(picReceived);
                 delete displayController;
                 preferenceController.updateHashCode(result.hash);
-            
             }
             else
             {
@@ -210,6 +206,7 @@ void setup()
     float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
     g_useUSB = battery_voltage > 4.1;
     preferenceController.loadOrUpdatePreferenceData();
+    g_pic_init();
     if (g_useUSB)
     {
         String deviceName = GetHostName();
@@ -233,7 +230,8 @@ void setup()
         if (!preferenceController.getSSID().isEmpty())
         {
             WiFi.begin(preferenceController.getSSID(), preferenceController.getPassword());
+            PictureRestEndpoint* pre = new PictureRestEndpoint("","","");
         }
-        delay(2000);
+        delay(10000);
     }
 }

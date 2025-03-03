@@ -98,7 +98,6 @@ void PreferenceController::updatePreferenceData()
     }
     m_preferences.end();
     Serial.println("..... DONE: "+ ssid);
-    serial_mtx.unlock();
     m_ssid = ssid;
     m_password = password;
     m_hashCode = hash;

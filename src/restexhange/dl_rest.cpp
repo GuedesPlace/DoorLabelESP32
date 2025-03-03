@@ -6,7 +6,7 @@
 #include <pngle.h>
 
 #include "./dl_constants.h"
-
+/*
 uint8_t *g_received;
 
 void pngle_on_draw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4])
@@ -39,6 +39,7 @@ void dl_rest_init()
     g_received = (uint8_t *)heap_caps_malloc(screen_width * screen_height, MALLOC_CAP_SPIRAM);
     memset(g_received, 0xFF, screen_width * screen_height);
 }
+
 hasNewPictureResult dl_rest_hasNewPicture(float voltage, String currentHash)
 {
     WiFiClientSecure *client = new WiFiClientSecure;
@@ -173,3 +174,4 @@ uint8_t *dl_rest_FetchPicture()
     }
     return nullptr;
 }
+    */
