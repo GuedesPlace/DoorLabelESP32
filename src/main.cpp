@@ -25,7 +25,7 @@
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 
-
+bool g_flip180 = true;
 int vref = 1100;
 bool g_useUSB = false;
 GPBleWrapper bleWrapper;
@@ -120,7 +120,7 @@ void loop()
     float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
     String voltage = "➸ Voltage: " + String(battery_voltage) + "V";
     Serial.println(voltage);
-    g_useUSB = battery_voltage > 4.5;
+    g_useUSB = battery_voltage > 4.3;
     preferenceController.loadOrUpdatePreferenceData();
     Serial.println(".. WIFI: "+preferenceController.getSSID());
     if (!preferenceController.isWiFiConfigured()) {
@@ -143,11 +143,13 @@ void loop()
         }
         if (result.hasNewPicture)
         {
+            Serial.println(result.hash);
             preferenceController.updateHashCode(result.hash);
+            delay(5000);
             uint8_t *picReceived = pre->FetchPictureToLocalBuffer();
             if (picReceived != nullptr)
             {
-                DisplayController *displayController = new DisplayController();
+                DisplayController *displayController = new DisplayController(g_flip180);
                 displayController->updateDisplayWithPicture(picReceived);
                 delete displayController;
             }
@@ -183,6 +185,7 @@ void setup()
         ADC_WIDTH_BIT_12,
         1100,
         &adc_chars);
+    g_flip180 = true;
 #else
     esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
         ADC_UNIT_2,
@@ -190,7 +193,7 @@ void setup()
         ADC_WIDTH_BIT_12,
         1100,
         &adc_chars);
-
+    g_flip180 = false;
 #endif
     if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
     {
@@ -205,7 +208,7 @@ void setup()
     Serial.println(GetHostName());
     uint16_t v = analogRead(BATT_PIN);
     float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
-    g_useUSB = battery_voltage > 4.4;
+    g_useUSB = battery_voltage > 4.3;
     preferenceController.loadOrUpdatePreferenceData();
     if (g_useUSB)
     {

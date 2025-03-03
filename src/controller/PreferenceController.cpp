@@ -1,7 +1,4 @@
 #include "preference_controller.h"
-#include <mutex>
-
-std::mutex serial_mtx;
 
 PreferenceController::PreferenceController() {
 }
@@ -78,7 +75,6 @@ void PreferenceController::loadOrUpdatePreferenceData()
 
 void PreferenceController::updatePreferenceData()
 {
-    serial_mtx.lock();
     m_preferences.begin("espDoorLabel", false);
     String ssid = "";
     String password = "";
@@ -102,6 +98,5 @@ void PreferenceController::updatePreferenceData()
     }
     m_preferences.end();
     Serial.println("..... DONE: "+ ssid);
-    serial_mtx.unlock();
     m_preferenceData = {ssid, password, hash, functionCode, endpointName};
 }

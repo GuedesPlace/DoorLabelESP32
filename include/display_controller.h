@@ -5,13 +5,14 @@
 
 class DisplayController {
     public:
-        DisplayController();
+        DisplayController(bool flip180);
         void updateDisplayWithPicture(uint8_t *received);
         void updateDisplayWithPreferenceData(preferenceData preferenceData);
         ~DisplayController();
     private:
         uint8_t* m_framebuffer;
         void intUpdateDisplay(uint32_t delay_ms);
+        bool m_flip180;
 };
 
 #endif

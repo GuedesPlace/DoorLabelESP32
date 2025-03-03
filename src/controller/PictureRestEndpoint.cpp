@@ -17,7 +17,7 @@ PictureRestEndpoint::PictureRestEndpoint(String endpointName, String functionCod
     m_endpointName = endpointName;
     m_functionCode = functionCode;
     m_macAddressAsString = macAddress;
-    m_macAddressAsString.replace(";", "_");
+    m_macAddressAsString.replace(":", "_");
     m_received = (uint8_t *)heap_caps_malloc(screen_width * screen_height, MALLOC_CAP_SPIRAM);
     memset(m_received, 0xFF, screen_width * screen_height);
     m_client = new WiFiClientSecure();
@@ -67,7 +67,6 @@ hasNewPictureResult PictureRestEndpoint::hasNewPicture(float voltage, String cur
                 const char *status = doc["status"]; // "changed"
                 const char *hash = doc["hash"];     // "51536a0ad51747c9ef52c01675ce20ee886c683ec069a86a42198aca1dbfe525"
                 String thisStatus = String(status);
-                Serial.println("STATUS: " + thisStatus);
                 https.end();
                 hasNewPictureResult result;
                 result.hash =String(hash);
@@ -113,6 +112,7 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                 while (https.connected())
                 {
                     size_t size = stream->available();
+                    
                     if (!size)
                     {
                         if (retry < 2)

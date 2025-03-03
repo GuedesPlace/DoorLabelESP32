@@ -2,10 +2,11 @@
 #include "epd_driver.h"
 #include <Arduino.h>
 
-DisplayController::DisplayController()
+DisplayController::DisplayController(bool flip180)
 {
     m_framebuffer = (uint8_t *)heap_caps_malloc(EPD_WIDTH * EPD_HEIGHT / 2, MALLOC_CAP_SPIRAM);
     memset(m_framebuffer, 0xFF, EPD_WIDTH * EPD_HEIGHT / 2);
+    m_flip180 = flip180;
 }
 void DisplayController::updateDisplayWithPicture(uint8_t *received)
 {
@@ -18,20 +19,39 @@ void DisplayController::updateDisplayWithPicture(uint8_t *received)
     uint8_t *translated; //[259200];
     translated = (uint8_t *)heap_caps_malloc(EPD_WIDTH * EPD_HEIGHT / 2, MALLOC_CAP_SPIRAM);
     int counter = 0;
-    for (int x = 0; x < EPD_HEIGHT; x++)
+    if (m_flip180)
     {
-        for (int y = EPD_WIDTH-1; y >= 0; y--)
+        for (int x = 0; x < EPD_HEIGHT; x++)
         {
-            if (y % 2 == 0)
+            for (int y = EPD_WIDTH - 1; y >= 0; y--)
             {
-                translated[counter] = received[x + (y * 540)];
-                counter++;
+                if (y % 2 == 0)
+                {
+                    translated[counter] = received[x + (y * 540)];
+                    counter++;
+                }
             }
         }
     }
+    else
+    {
+        Serial.println("NO FLIP");
+        for (int x = EPD_HEIGHT -1; x >=0; x--)
+        {
+            for (int y = 0; y < EPD_WIDTH; y++)
+            {
+                if (y % 2 == 0)
+                {
+                    translated[counter] = received[x + (y * 540)];
+                    counter++;
+                }
+            }
+        }
+
+    }
 
     epd_copy_to_framebuffer(area, translated, m_framebuffer);
-    intUpdateDisplay(100);
+    intUpdateDisplay(1000);
     Serial.println("--->Power down / Clean Heap");
     heap_caps_free(translated);
 }

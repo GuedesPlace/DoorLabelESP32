@@ -40,7 +40,6 @@ public:
     };
     void onConfigPropertyUpdate(GPConfigurationProperties *properties)
     {
-        Serial.println("Update....");
         String endpoint = properties->getProperty(0).value;
         String functionCode = properties->getProperty(1).value;
         m_prefController->updateEndpointName(endpoint);
