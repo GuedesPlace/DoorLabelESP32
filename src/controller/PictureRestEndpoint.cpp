@@ -120,16 +120,18 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                     size_t size = stream->available();
                     if (!size)
                     {
-                        if (retry < 2)
+                        if (retry < 10)
                         {
                             Serial.print("Ready for retry: ");
                             Serial.println(retry);
-                            delay(10);
+                            delay(100);
                             retry++;
                             continue;
                         }
                         Serial.println("Cuttoff");
                         break;
+                    } else {
+                        retry = 0;
                     }
 
                     if (size > sizeof(buf) - remain)
