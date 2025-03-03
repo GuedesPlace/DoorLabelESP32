@@ -8,8 +8,8 @@ PreferenceController::PreferenceController() {
 
 void PreferenceController::updateWifiData(String ssid, String password)
 {
-    m_preferenceData.ssid = ssid;
-    m_preferenceData.password = password;
+    m_ssid = String(ssid);
+    m_password = String(password);
     m_preferences.begin("espDoorLabel", false);
     m_preferences.putString("ssid", ssid);
     m_preferences.putString("password", password);
@@ -18,7 +18,7 @@ void PreferenceController::updateWifiData(String ssid, String password)
 
 void PreferenceController::updateFunctionCode(String functionCode)
 {
-    m_preferenceData.functionCode = functionCode;
+    m_functionCode = String(functionCode);
     m_preferences.begin("espDoorLabel", false);
     m_preferences.putString("functionCode", functionCode);
     m_preferences.end();
@@ -26,7 +26,7 @@ void PreferenceController::updateFunctionCode(String functionCode)
 
 void PreferenceController::updateHashCode(String hashCode)
 {
-    m_preferenceData.hash = hashCode;
+    m_hashCode = String(hashCode);
     m_preferences.begin("espDoorLabel", false);
     m_preferences.putString("hashCode", hashCode);
     m_preferences.end();
@@ -34,7 +34,7 @@ void PreferenceController::updateHashCode(String hashCode)
 
 void PreferenceController::updateEndpointName(String endpointName)
 {
-    m_preferenceData.endpointName = endpointName;
+    m_endpointName = String(endpointName);
     m_preferences.begin("espDoorLabel", false);
     m_preferences.putString("endpointName", endpointName);
     m_preferences.end();
@@ -42,33 +42,33 @@ void PreferenceController::updateEndpointName(String endpointName)
 
 bool PreferenceController::isWiFiConfigured()
 {
-    return !m_preferenceData.ssid.isEmpty();
+    return !m_ssid.isEmpty();
 }
 
 bool PreferenceController::isEndpointConfigured()
 {
-    return !m_preferenceData.endpointName.isEmpty() && !m_preferenceData.functionCode.isEmpty();
+    return !m_endpointName.isEmpty() && !m_functionCode.isEmpty();
 }
-String PreferenceController::getEnpointName() {
-    return m_preferenceData.endpointName;
+String PreferenceController::getEndpointName() {
+    return m_endpointName;
 }
 String PreferenceController::getFunctionCode() {
-    return m_preferenceData.functionCode;
+    return m_functionCode;
 }
 
 String PreferenceController::getSSID()
 {
-    return m_preferenceData.ssid;
+    return m_ssid;
 }
 
 String PreferenceController::getPassword()
 {
-    return m_preferenceData.password;
+    return m_password;
 }
 
 String PreferenceController::getHashCode()
 {
-    return m_preferenceData.hash;
+    return m_hashCode;
 }
 
 void PreferenceController::loadOrUpdatePreferenceData()
@@ -103,5 +103,9 @@ void PreferenceController::updatePreferenceData()
     m_preferences.end();
     Serial.println("..... DONE: "+ ssid);
     serial_mtx.unlock();
-    m_preferenceData = {ssid, password, hash, functionCode, endpointName};
+    m_ssid = ssid;
+    m_password = password;
+    m_hashCode = hash;
+    m_functionCode = functionCode;
+    m_endpointName = endpointName;
 }
