@@ -13,7 +13,7 @@ class PreferenceController {
         void updateEndpointName(String endpointName);
         bool isWiFiConfigured();
         bool isEndpointConfigured();
-        String getEnpointName();
+        String getEndpointName();
         String getFunctionCode();
         String getSSID();
         String getPassword();
@@ -21,7 +21,11 @@ class PreferenceController {
         void loadOrUpdatePreferenceData();
     private:
         Preferences m_preferences;
-        preferenceData m_preferenceData;
+        String m_ssid;
+        String m_password;
+        String m_hashCode;
+        String m_endpointName;
+        String m_functionCode;
         void updatePreferenceData();
 }; 
 

@@ -32,7 +32,7 @@ public:
     GPConfigurationProperties *getProperties()
     {
         GPConfigurationProperties *properties = new GPConfigurationProperties(2);
-        gpConfigProperty propertyEndpoint = {"endpointname", "Name des CloudEndpints", m_prefController->getEnpointName()};
+        gpConfigProperty propertyEndpoint = {"endpointname", "Name des CloudEndpints", m_prefController->getEndpointName()};
         gpConfigProperty propertyFunctionCode = {"functionCode", "API Key", m_prefController->getFunctionCode()};
         properties->setProperty(propertyEndpoint, 0);    
         properties->setProperty(propertyFunctionCode, 1);

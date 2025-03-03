@@ -109,7 +109,7 @@ void WriteNotRegistered() {
         return;
     }
     TextDisplayController *tdc = new TextDisplayController();
-    tdc->updateDisplayNotRegistred(preferenceController.getEnpointName(),  wifiWrapper.getMacAddress());
+    tdc->updateDisplayNotRegistred(preferenceController.getEndpointName(),  wifiWrapper.getMacAddress());
     delete tdc;
     delay(60000);
 }
@@ -120,7 +120,7 @@ void loop()
     float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
     String voltage = "➸ Voltage: " + String(battery_voltage) + "V";
     Serial.println(voltage);
-    g_useUSB = battery_voltage > 4.3;
+    g_useUSB = battery_voltage > 4.1;
     preferenceController.loadOrUpdatePreferenceData();
     Serial.println(".. WIFI: "+preferenceController.getSSID());
     if (!preferenceController.isWiFiConfigured()) {
@@ -135,7 +135,7 @@ void loop()
     if (currentStatus == WL_CONNECTED)
     {
         Serial.println("WIFICONNECTED");
-        PictureRestEndpoint *pre = new PictureRestEndpoint(preferenceController.getEnpointName(),preferenceController.getFunctionCode(),wifiWrapper.getMacAddress());
+        PictureRestEndpoint *pre = new PictureRestEndpoint(preferenceController.getEndpointName(),preferenceController.getFunctionCode(),wifiWrapper.getMacAddress());
         hasNewPictureResult result = pre->hasNewPicture(battery_voltage, preferenceController.getHashCode());
         if (result.notConfigured) {
             WriteNotRegistered();
@@ -143,15 +143,15 @@ void loop()
         }
         if (result.hasNewPicture)
         {
-            Serial.println(result.hash);
             preferenceController.updateHashCode(result.hash);
-            delay(5000);
             uint8_t *picReceived = pre->FetchPictureToLocalBuffer();
             if (picReceived != nullptr)
             {
                 DisplayController *displayController = new DisplayController(g_flip180);
                 displayController->updateDisplayWithPicture(picReceived);
                 delete displayController;
+                preferenceController.updateHashCode(result.hash);
+            
             }
             else
             {
@@ -208,7 +208,7 @@ void setup()
     Serial.println(GetHostName());
     uint16_t v = analogRead(BATT_PIN);
     float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
-    g_useUSB = battery_voltage > 4.3;
+    g_useUSB = battery_voltage > 4.1;
     preferenceController.loadOrUpdatePreferenceData();
     if (g_useUSB)
     {

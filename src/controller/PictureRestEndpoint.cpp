@@ -6,11 +6,11 @@
 const uint32_t screen_width = 960;
 const uint32_t screen_height = 540;
 
-PictureRestEndpoint * pictureRestEndpointPtr;
-void onDraw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4]) {
-    return pictureRestEndpointPtr->pngle_on_draw(pngle,x,y,w,h,rgba);
+PictureRestEndpoint *pictureRestEndpointPtr;
+void onDraw(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint8_t rgba[4])
+{
+    return pictureRestEndpointPtr->pngle_on_draw(pngle, x, y, w, h, rgba);
 }
-
 
 PictureRestEndpoint::PictureRestEndpoint(String endpointName, String functionCode, String macAddress)
 {
@@ -40,9 +40,10 @@ hasNewPictureResult PictureRestEndpoint::hasNewPicture(float voltage, String cur
             int httpCode = https.POST(toPost);
             Serial.print("RESPONSE CODE: ");
             Serial.println(httpCode);
-            if (httpCode == 204) {
+            if (httpCode == 204)
+            {
                 hasNewPictureResult result;
-                result.hash ="";
+                result.hash = "";
                 result.hasNewPicture = false;
                 result.notConfigured = true;
                 https.end();
@@ -58,7 +59,7 @@ hasNewPictureResult PictureRestEndpoint::hasNewPicture(float voltage, String cur
                     Serial.print("deserializeJson() failed: ");
                     Serial.println(error.c_str());
                     hasNewPictureResult result;
-                    result.hash ="";
+                    result.hash = "";
                     result.hasNewPicture = false;
                     result.notConfigured = false;
                     return result;
@@ -69,7 +70,7 @@ hasNewPictureResult PictureRestEndpoint::hasNewPicture(float voltage, String cur
                 String thisStatus = String(status);
                 https.end();
                 hasNewPictureResult result;
-                result.hash =String(hash);
+                result.hash = String(hash);
                 result.hasNewPicture = thisStatus.equals("changed");
                 result.notConfigured = false;
                 return result;
@@ -78,7 +79,11 @@ hasNewPictureResult PictureRestEndpoint::hasNewPicture(float voltage, String cur
             https.end();
         }
     }
-    return {false, ""};
+    hasNewPictureResult result;
+    result.hash = "";
+    result.hasNewPicture = false;
+    result.notConfigured = false;
+    return result;
 }
 uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
 {
@@ -91,7 +96,7 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
 
         // Initializing an HTTPS communication using the secure client
         Serial.print("[HTTPS] begin...\n");
-        if (https.begin(*m_client, "https://"+m_endpointName+".azurewebsites.net/api/deviceimage/"+m_macAddressAsString+"?code="+m_functionCode))
+        if (https.begin(*m_client, "https://" + m_endpointName + ".azurewebsites.net/api/deviceimage/" + m_macAddressAsString + "?code=" + m_functionCode))
         { // HTTPS
             Serial.print("[HTTPS] GET...\n");
             // start connection and send HTTP header
@@ -102,9 +107,9 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                 WiFiClient *stream = https.getStreamPtr();
                 pngle_t *pngle = pngle_new();
                 pictureRestEndpointPtr = this;
-                //pngle_draw_callback_t onDrawCB = std::bind(&PictureRestEndpoint::pngle_on_draw, this);
-                //pngle_set_draw_callback(pngle, onDrawCB);
-                //pngle_set_draw_callback(pngle, callback);
+                // pngle_draw_callback_t onDrawCB = std::bind(&PictureRestEndpoint::pngle_on_draw, this);
+                // pngle_set_draw_callback(pngle, onDrawCB);
+                // pngle_set_draw_callback(pngle, callback);
                 pngle_set_draw_callback(pngle, &onDraw);
                 uint8_t buf[2048];
                 int remain = 0;
@@ -115,16 +120,18 @@ uint8_t *PictureRestEndpoint::FetchPictureToLocalBuffer()
                     
                     if (!size)
                     {
-                        if (retry < 2)
+                        if (retry < 10)
                         {
                             Serial.print("Ready for retry: ");
                             Serial.println(retry);
-                            delay(10);
+                            delay(100);
                             retry++;
                             continue;
                         }
                         Serial.println("Cuttoff");
                         break;
+                    } else {
+                        retry = 0;
                     }
 
                     if (size > sizeof(buf) - remain)
